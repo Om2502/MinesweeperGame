@@ -1,0 +1,540 @@
+package cs1302.game;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.NoSuchElementException;
+import java.util.Random;
+import java.util.Scanner;
+
+public class MinesweeperGame {
+    private String[][] displayedArray;
+    private boolean[][] actualArray;
+    private boolean [][] noFogArray;
+    private int rounds = 0;
+    private int mines = 0;
+    private boolean noFog = false;
+    private final Scanner stdIn;
+
+Scanner scan = new Scanner(System.in);
+
+/**
+* Constructs an object of the {@link MinesweeperGame} class using the
+* information provided in the <code>seedFile</code>.
+*
+* @param filePath is the path to the text file.
+*
+*/
+
+public MinesweeperGame(String filePath) {
+try {
+File seedFile = new File(filePath);
+
+this.stdIn = stdIn;
+Scanner inputScanner = new Scanner(seedFile);
+int rows = 0, cols = 0, total = 0;
+if (inputScanner.hasNextInt()) {
+rows = inputScanner.nextInt();
+if (rows < 5) {
+System.out.println(
+"Cannot create game with " + seedFile + ", "
++ "because it is not formatted correctly.");
+System.out.println();
+System.exit(3);
+}
+if (inputScanner.hasNextInt()) {
+cols = inputScanner.nextInt();
+if (cols < 5) {
+System.out.println("Cannot create game with " + seedFile + ", "
++ "because it is not formatted correctly.");
+System.out.println();
+System.exit(3);
+}
+if (inputScanner.hasNextInt()) {
+mines = inputScanner.nextInt();
+}
+}
+}
+this.generateField(rows, cols);
+for (int i = 0; i < mines; i++) {
+int row = 0, col = 0;
+if (inputScanner.hasNextInt()) {
+row = inputScanner.nextInt();
+if (inputScanner.hasNextInt()) {
+col = inputScanner.nextInt();
+if ((row >= 0 && row < rows) && (col >= 0 && col < cols)) {
+actualArray[row][col] = true;
+total++;
+}
+}
+}
+}
+if (total != mines) {
+System.out.println(
+"Cannot create game with " + seedFile + ", "
++ "because it is not formatted correctly.");
+System.out.println();
+System.exit(1);
+}
+} catch (FileNotFoundException ex) {
+System.out.println("ERROR: File not found/invalid file.");
+System.exit(0);
+} catch (NumberFormatException nfe) {
+System.out.println("ERROR: Invalid format.");
+System.exit(0);
+} catch (NoSuchElementException nsee) {
+System.out.println("ERROR: Please enter command.");
+System.exit(0);
+}
+}
+
+/**
+* Based on the given row and column values the MineField is generated.
+*
+* @param rows the row index of the square
+* @param cols the column index of the square
+*/
+
+private void generateField(int rows, int cols) {
+displayedArray = new String[rows][cols];
+actualArray = new boolean[rows][cols];
+noFogArray = new boolean[rows][cols];
+for (int i = 0; i < rows; i++) {
+for (int j = 0; j < cols; j++) {
+actualArray[i][j] = false;
+displayedArray[i][j] = " ";
+//noFogArray[i][j] = " ";
+}
+}
+}
+
+/**
+* Constructs an object of the {@link MinesweeperGame} class using the inputed
+* <code>rows</code> and <code>cols</code> values. Consequently, a certain
+* percentage of the squares in the grid will be randomly assigned to hold
+OB * mines.
+*
+* @param rows the number of rows in the game grid
+* @param cols the number of cols in the game grid
+*/
+
+public MinesweeperGame(int rows, int cols) {
+if (rows < 5 && cols < 5) {
+System.out.println();
+System.out.println("Cannot create a mine field with that input");
+System.exit(0);
+} else {
+this.generateField(rows, cols);
+}
+Random x = new Random();
+Random y = new Random();
+this.mines = (int) Math.ceil(rows * cols * .15625); // use maybe floor instead check again
+int oldRow = 0;
+int oldCol = 0;
+for (int i = 0; i < this.mines; i++) {
+int row = x.nextInt(rows);
+int col = y.nextInt(cols);
+if (i > 0) {
+if (row == oldRow && col == oldCol) {
+i--;
+continue;
+}
+}
+oldRow = row;
+oldCol = col;
+actualArray[row][col] = true;
+}
+}
+
+/**
+* Prints the welcome message for the Minesweeper game.
+*/
+
+private void printWelcome() {
+System.out.println(" _");
+System.out.println(" /\\/\\ (_)_ __ ___ _____ _____ ___ _ __ ___ _ __");
+System.out.print(" / \\| | '_ \\ / _ \\/ __\\ \\ /\\ / / _ \\/ _ \\ '_ \\ / _ \\ ");
+System.out.println("'__|");
+System.out.println("/ /\\/\\ \\ | | | | __/\\__ \\\\ V V / __/ __/ |_) | __/ " + "|");
+System.out.println("\\/ \\/_|_| |_|\\___||___/ \\_/\\_/ \\___|\\___| .__/ \\___|_|");
+System.out.println(" A L P H A E D I T I O N |_| v2022.sp");
+System.out.println();
+}
+
+/**
+* Prints the MineField for the Minesweeper game.
+*/
+
+private void printMineField() {
+System.out.println();
+System.out.print("Rounds Completed: " + rounds);
+System.out.println();
+for (int i = 0; i < displayedArray.length; i++) {
+if (i > 9) {
+System.out.print(i + "|");
+} else {
+System.out.print(i + " |");
+}
+for (int j = 0; j < displayedArray[i].length; j++) {
+System.out.print(displayedArray[i][j]);
+if (j < displayedArray[i].length - 1) {
+System.out.print("|");
+}
+}
+System.out.println("|");
+}
+System.out.print(" ");
+for (int i = 0; i < displayedArray[0].length; i++) {
+System.out.print(i + " ");
+}
+System.out.println();
+}
+
+/**
+* Prints noFogArray.
+*/
+private void printNoFog() {
+System.out.println();
+System.out.print("Rounds Completed: " + rounds);
+System.out.println();
+for (int i = 0; i < noFogArray.length; i++) {
+System.out.print(i + " |");
+for (int j = 0; j < noFogArray[i].length; j++) {
+if (actualArray[i][j]) {
+System.out.print("<" + displayedArray[i][j].substring(1, 2) + ">");
+} else {
+System.out.print(displayedArray[i][j]);
+}
+if (j < noFogArray[i].length - 1) {
+System.out.print("|");
+}
+}
+System.out.println("|");
+}
+System.out.print(" ");
+for (int i = 0; i < displayedArray[0].length; i++) {
+System.out.print(i + " ");
+}
+System.out.println();
+}
+
+/**
+* Makes noFog true.
+*/
+private void noFog() {
+
+noFog = true;
+
+}
+
+/**
+* Depending on the inputed command, different actions are taken in the game.
+*/
+public void inputCommand() {
+
+String input = scan.nextLine().trim();
+Scanner reader = new Scanner(input);
+String command = reader.next().trim();
+String inputString = input + " ";
+
+if (inputString.substring(0, 6).equals("reveal")
+|| inputString.substring(0, 1).equals("r")) {
+if (!(reveal(reader))) {
+rounds++;
+commandNotRecognized();
+}
+} else if (inputString.substring(0, 5).equals("guess")
+|| inputString.substring(0, 1).equals("g")) {
+if (!(guess(reader))) {
+rounds++;
+commandNotRecognized();
+}
+} else if (inputString.substring(0, 4).equals("mark")
+|| inputString.substring(0, 1).equals("m")) {
+if (!(mark(reader))) {
+rounds++;
+commandNotRecognized();
+}
+} else if (command.equals("help")
+|| command.equals("h")) {
+help();
+rounds++;
+} else if (command.equals("quit")
+|| command.equals("q")) {
+quit();
+
+} else if (inputString.substring(0, 6).equals("no fog")
+|| inputString.substring(0, 1).equals("n")) {
+
+rounds++;
+noFog();
+
+} else {
+commandNotRecognized();
+}
+
+}
+
+/**
+*
+* Reveals the contents of the square selected.
+*
+* @param reader takes in the command line input.
+* @return false if the coordinates were formatted incorrectly or out of bounds.
+*/
+private boolean reveal(Scanner reader) {
+boolean revealDone = false;
+int revealRow = 0;
+int revealCol = 0;
+if (reader.hasNextInt()) {
+revealRow = reader.nextInt();
+if (reader.hasNextInt()) {
+revealCol = reader.nextInt();
+if (!reader.hasNextInt()) {
+if (revealRow >= 0 && revealRow < actualArray.length && revealCol >= 0
+&& revealCol < actualArray[0].length) {
+revealDone = true;
+this.rounds++;
+if (!actualArray[revealRow][revealCol]) {
+displayedArray[revealRow][revealCol]
+= " " + getAdjMines(revealRow, revealCol) + " ";
+System.out.println();
+} else {
+printLoss();
+}
+}
+}
+}
+}
+return revealDone;
+}
+
+/**
+*
+* Allows the user to guess where the mine is and flag it, without formally
+* marking it.
+*
+* @param reader takes in the command line input.
+* @return false if the coordinates were formatted incorrectly or out of bounds.
+*/
+private boolean guess(Scanner reader) {
+boolean guessDone = false;
+int guessRow = 0;
+int guessCol = 0;
+if (reader.hasNextInt()) {
+guessRow = reader.nextInt();
+if (reader.hasNextInt()) {
+guessCol = reader.nextInt();
+if (!reader.hasNextInt()) {
+if (guessRow >= 0 && guessRow < actualArray.length && guessCol >= 0
+&& guessCol < actualArray[0].length) {
+guessDone = true;
+this.rounds++;
+displayedArray[guessRow][guessCol] = " ? ";
+System.out.println();
+}
+}
+}
+}
+return guessDone;
+}
+
+/**
+*
+* Allows the user to mark the mine where they think it is and flag it.
+*
+* @param reader takes in the command line input.
+* @return false if the coordinates were formatted incorrectly or out of bounds.
+*/
+private boolean mark(Scanner reader) {
+boolean markDone = false;
+int markRow = 0;
+int markCol = 0;
+if (reader.hasNextInt()) {
+markRow = reader.nextInt();
+if (reader.hasNextInt()) {
+markCol = reader.nextInt();
+if (!reader.hasNextInt()) {
+if (markRow >= 0 && markRow < actualArray.length && markCol >= 0
+&& markCol < actualArray[0].length) {
+markDone = true;
+this.rounds++;
+displayedArray[markRow][markCol] = " F ";
+System.out.println();
+}
+}
+}
+}
+return markDone;
+}
+
+/**
+* Shows all the options available to the user except for noFog.
+*/
+private void help() {
+this.rounds++;
+System.out.println();
+System.out.println("Commands Available...");
+System.out.println(" - Reveal: r/reveal row col");
+System.out.println(" - Mark: m/mark row col");
+System.out.println(" - Guess: g/guess row col");
+System.out.println(" - Help: h/help");
+System.out.println(" - Quit: q/quit");
+System.out.println();
+}
+
+/**
+* Allows the user to exit the game.
+*/
+private void quit() {
+System.out.println();
+System.out.println("Thank you for playing! Goodbye!");
+System.exit(0);
+}
+
+/**
+* Prints command not recognized message.
+*/
+private void commandNotRecognized() {
+System.out.println();
+System.out.println("Input Error: Command not recognized!");
+System.out.println();
+}
+
+/**
+* Returns the number of mines adjacent to the specified square in the grid.
+*
+* @param row the row index of the square
+* @param col the column index of the square
+* @return the number of adjacent mines
+*/
+private int getAdjMines(int row, int col) {
+int adjMines = 0;
+for (int i = row - 1; i <= row + 1; i++) {
+for (int j = col - 1; j <= col + 1; j++) {
+if ((i >= 0 && i < displayedArray.length)
+&& (j >= 0 && j < displayedArray[0].length)) {
+if (actualArray[i][j]) {
+adjMines++;
+}
+}
+
+}
+}
+return adjMines;
+}
+
+/**
+*
+* Prints when the user loses the game.
+*
+*/
+private void printLoss() {
+System.out.println();
+System.out.println(" Oh no... You revealed a mine!");
+System.out.println(" __ _ __ _ _ __ ___ ___ _____ _____ _ __ ");
+System.out.println(" / _` |/ _` | '_ ` _ \\ / _ \\ / _ \\ \\ / / _ \\ '__|");
+System.out.println("| (_| | (_| | | | | | | __/ | (_) \\ V / __/ | ");
+System.out.println(" \\__, |\\__,_|_| |_| |_|\\___| \\___/ \\_/ \\___|_| ");
+System.out.println(" |___/ ");
+System.out.println();
+System.exit(0);
+}
+
+/**
+*
+* Checks if the conditions to win the game are met.
+*
+* @return true if mineMarked and squaresShown's conditions are met.
+*/
+private boolean win() {
+boolean minesMarked = true;
+boolean squaresShown = true;
+for (int i = 0; i < displayedArray.length; i++) {
+for (int j = 0; j < displayedArray[0].length; j++) {
+if (actualArray[i][j] && displayedArray[i][j] == " F ") {
+
+minesMarked = false;
+
+} else if (displayedArray[i][j].equals(" ")
+|| displayedArray[i][j].equals("< >")) {
+squaresShown = false;
+
+}
+}
+}
+return minesMarked && squaresShown;
+}
+
+
+
+
+/**
+*
+* Prints when the user wins the game.
+*
+*/
+private void printWin() {
+System.out.println();
+System.out.println(" ░░░░░░░░░▄░░░░░░░░░░░░░░▄░░░░ \"So Doge\"");
+System.out.println(" ░░░░░░░░▌▒█░░░░░░░░░░░▄▀▒▌░░░");
+System.out.println(" ░░░░░░░░▌▒▒█░░░░░░░░▄▀▒▒▒▐░░░ \"Such Score\"");
+System.out.println(" ░░░░░░░▐▄▀▒▒▀▀▀▀▄▄▄▀▒▒▒▒▒▐░░░");
+System.out.println(" ░░░░░▄▄▀▒░▒▒▒▒▒▒▒▒▒█▒▒▄█▒▐░░░ \"Much Minesweeping\"");
+System.out.println(" ░░░▄▀▒▒▒░░░▒▒▒░░░▒▒▒▀██▀▒▌░░░");
+System.out.println(" ░░▐▒▒▒▄▄▒▒▒▒░░░▒▒▒▒▒▒▒▀▄▒▒▌░░ \"Wow\"");
+System.out.println(" ░░▌░░▌█▀▒▒▒▒▒▄▀█▄▒▒▒▒▒▒▒█▒▐░░");
+System.out.println(" ░▐░░░▒▒▒▒▒▒▒▒▌██▀▒▒░░░▒▒▒▀▄▌░");
+System.out.println(" ░▌░▒▄██▄▒▒▒▒▒▒▒▒▒░░░░░░▒▒▒▒▌░");
+System.out.println(" ▀▒▀▐▄█▄█▌▄░▀▒▒░░░░░░░░░░▒▒▒▐░");
+System.out.println(" ▐▒▒▐▀▐▀▒░▄▄▒▄▒▒▒▒▒▒░▒░▒░▒▒▒▒▌");
+System.out.println(" ▐▒▒▒▀▀▄▄▒▒▒▄▒▒▒▒▒▒▒▒░▒░▒░▒▒▐░");
+System.out.println(" ░▌▒▒▒▒▒▒▀▀▀▒▒▒▒▒▒░▒░▒░▒░▒▒▒▌░");
+System.out.println(" ░▐▒▒▒▒▒▒▒▒▒▒▒▒▒▒░▒░▒░▒▒▄▒▒▐░░");
+System.out.println(" ░░▀▄▒▒▒▒▒▒▒▒▒▒▒░▒░▒░▒▄▒▒▒▒▌░░");
+System.out.println(" ░░░░▀▄▒▒▒▒▒▒▒▒▒▒▄▄▄▀▒▒▒▒▄▀░░░ CONGRATULATIONS!");
+System.out.println(" ░░░░░░▀▄▄▄▄▄▄▀▀▀▒▒▒▒▒▄▄▀░░░░░ YOU HAVE WON!");
+System.out.println(" ░░░░░░░░░▒▒▒▒▒▒▒▒▒▒▀▀░░░░░░░░ SCORE: " + score());
+System.out.println("");
+System.exit(0);
+}
+
+/**
+* Calculates score of the user.
+*
+* @return the score.
+*/
+private int score() {
+int score = 0;
+score = (displayedArray.length * displayedArray[0].length * 100) / rounds;
+return score;
+}
+
+/**
+*
+* Allows for the Minesweeper game to be played.
+*
+*/
+public void play() {
+printWelcome();
+while (true) {
+if (noFog) {
+printNoFog();
+noFog = false;
+} else {
+printMineField();
+}
+System.out.print("minesweeper-alpha$ ");
+inputCommand();
+if (win()) {
+printWin();
+break;
+
+
+if (Lost()) {
+    printLoss();
+break;
+}
+}
+}
+}
+}
